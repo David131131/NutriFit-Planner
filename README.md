@@ -8,15 +8,60 @@
 
 ## 🚀 如何使用
 
-方式一（最简单）：直接双击打开 `index.html`。
+### 方式零（最省事）：直接用在线版
 
-方式二：本地起一个静态服务器后访问 <http://localhost:8000>：
+GitHub Pages 已部署，打开浏览器访问即可（无需下载任何文件）：
+
+👉 **https://david131131.github.io/NutriFit-Planner/**
+
+手机、平板、电脑都能用。
+
+---
+
+### 方式一：双击打开 `index.html`（离线使用，无需安装任何软件）
+
+**第一步：找到 `index.html` 在哪里**
+
+这个工具的所有文件都在名为 `NutriFit-Planner` 的文件夹里，`index.html` 是它的**入口文件，位于该文件夹的最外层（根目录）**：
+
+```
+NutriFit-Planner/
+├── index.html   ← 就是这个文件，双击它启动工具
+├── css/         ← 样式（配套文件，必须和 index.html 在一起）
+├── js/          ← 程序与数据（配套文件，同上）
+├── tools/       ← 开发测试脚本
+├── LICENSE
+└── README.md
+```
+
+- **macOS（本机）**：完整路径是 `/Users/daifengyuan/Desktop/NutriFit-Planner/index.html`。操作：打开「访达 Finder」→ 左侧边栏点「桌面」→ 双击进入 `NutriFit-Planner` 文件夹 → 找到 `index.html`
+- **Windows**：如果项目在桌面，路径类似 `C:\Users\你的用户名\Desktop\NutriFit-Planner\index.html`。操作：打开「此电脑」→「桌面」→ 双击进入 `NutriFit-Planner` 文件夹
+
+**第二步：双击打开它**
+
+- macOS：直接双击 `index.html`，默认用 Safari 打开；想用 Chrome 就**右键 → 打开方式 → Google Chrome**
+- Windows：双击默认用 Edge 打开；想用别的浏览器就**右键 → 打开方式 → 选择浏览器**
+- ⚠️ 如果双击后弹出来的是"代码编辑器/记事本"界面（说明系统把它当文本打开了）：**右键 → 打开方式 → 选 Chrome / Edge / Safari 等浏览器**即可
+
+**第三步：在页面上按 4 个步骤操作**
+
+1. 第①步「输入资料」：填性别、年龄、身高、体重、**目标体重**、所在地区、运动量 → 点右下角「计算我的数据 →」
+2. 第②步「计算结果」：查看体脂率、基础代谢、建议每日摄入
+3. 第③步「饮食方案」：对比 6 套方案的天数与成本 → 点任一方案的「选择此方案 →」
+4. 第④步「一周日程」：得到周一至周日三餐安排；**点击任意菜品**可查看食材清单与分步做法；不满意可点「🔄 换一批菜品」；可「⬇️ 导出 CSV」保存到本地
+
+> 💡 重要提示：请**保持整个 `NutriFit-Planner` 文件夹完整**，不要只把 `index.html` 单独复制/移动到别处——它必须和同目录的 `css/`、`js/` 文件夹在一起才能正常显示。
+
+### 方式二：用本地服务器打开（双击无效、或被浏览器安全策略限制时用）
+
+打开「终端」（macOS：聚焦搜索输入 Terminal；Windows：PowerShell），依次执行：
 
 ```bash
-cd NutriFit-Planner
-python3 -m http.server 8000
-# 或：npx serve .
+cd ~/Desktop/NutriFit-Planner        # 进入项目文件夹（Windows 用实际路径）
+python3 -m http.server 8000          # 启动本地服务器（Windows 若无 python 用：npx serve .）
 ```
+
+然后打开浏览器访问 <http://localhost:8000> 即可（用完按 `Ctrl+C` 停止）。
 
 无需安装任何依赖、无需联网（字体为系统字体，全部数据内置）。
 
