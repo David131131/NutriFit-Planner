@@ -72,6 +72,10 @@ node tools/check.js     # 数据完整性 + 端到端逻辑测试
 node tools/ui-test.js   # jsdom 无头 UI 冒烟测试（需先安装 jsdom）
 ```
 
+## 📄 License
+
+本项目采用 [MIT License](LICENSE) 开源协议，可自由使用、修改与分发（保留版权声明即可）。
+
 ## ⚠️ 免责声明
 
 - 所有算法与结果为公开公式的**估算参考值**，仅供参考，**不具医疗效力**；
