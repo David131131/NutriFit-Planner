@@ -934,6 +934,8 @@ document.addEventListener("change", function (e) {
 });
 
 document.addEventListener("input", function (e) {
+  /* 风险确认框由 change 处理器管理，跳过以免重绘警告区导致勾选状态丢失 */
+  if (e.target.id === "f-ack") return;
   if (e.target.closest("#sec-input")) {
     saveFormFromDom();
     updateWarnings();
