@@ -71,7 +71,13 @@ function click(el) {
   const submitBtn = doc.getElementById("btnSubmit");
   if (!submitBtn.disabled) fail("未勾选确认时提交按钮应禁用");
   else ok("未勾选确认时提交按钮禁用 ✓");
-  if (ack) { ack.checked = true; fire(ack, "change"); }
+  /* 模拟真实浏览器事件顺序：input → change（回归：勾选状态必须保留） */
+  ack.checked = true;
+  fire(ack, "input");
+  fire(ack, "change");
+  const ackAfter = doc.getElementById("f-ack");
+  if (!ackAfter || !ackAfter.checked) fail("勾选后确认框被重绘重置（无法勾选 bug）");
+  else ok("勾选后确认框保持勾选状态 ✓");
   if (doc.getElementById("btnSubmit").disabled) fail("勾选确认后提交按钮未启用");
   else ok("勾选确认后提交按钮启用 ✓");
 
