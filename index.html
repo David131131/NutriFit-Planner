@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NutriFit-Planner · 个性化减脂饮食方案生成器</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="brand">
+    <div class="logo">🥗</div>
+    <div class="brand-text">
+      <h1>NutriFit-Planner</h1>
+      <p class="tagline" id="tagline">个性化减脂饮食方案生成器</p>
+    </div>
+  </div>
+  <div class="header-controls">
+    <label class="ctl-label" for="currencySel"><span id="lblCurrency">货币</span></label>
+    <select id="currencySel" class="ctl-select">
+      <option value="CNY">¥ CNY</option>
+      <option value="USD">$ USD</option>
+      <option value="EUR">€ EUR</option>
+    </select>
+    <button id="langToggle" class="btn btn-white btn-small" type="button">English</button>
+  </div>
+</header>
+
+<nav class="stepper" id="stepper" aria-label="steps"></nav>
+
+<main>
+  <section id="sec-input"></section>
+  <section id="sec-results" hidden></section>
+  <section id="sec-plans" hidden></section>
+  <section id="sec-schedule" hidden></section>
+  <noscript><div class="warn-box warn-danger"><p>本工具需要启用 JavaScript 才能运行 / This tool requires JavaScript to run.</p></div></noscript>
+</main>
+
+<footer class="app-footer" id="footer"></footer>
+
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal" id="modalBox" role="dialog" aria-modal="true"></div>
+</div>
+
+<script src="js/i18n.js"></script>
+<script src="js/data-regions.js"></script>
+<script src="js/data-ingredients.js"></script>
+<script src="js/data-macros.js"></script>
+<script src="js/data-dishes-east-asia.js"></script>
+<script src="js/data-dishes-global.js"></script>
+<script src="js/data-dishes-south-asia.js"></script>
+<script src="js/data-dishes-west.js"></script>
+<script src="js/data-dishes-others.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/planner.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
