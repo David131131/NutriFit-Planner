@@ -61,6 +61,62 @@ function tagChip(tag) {
   else if (tag === "highprotein") cls += " chip-red";
   return '<span class="' + cls + '">' + esc(tagLabel(tag)) + "</span>";
 }
+
+/* ---------- 份量直观化：把食材克数换算成常见计量单位 ---------- */
+var PORTION_UNITS = {
+  egg:             { g: 50,  zh: "个", en: "eggs" },
+  banana:          { g: 120, zh: "根", en: "bananas" },
+  apple:           { g: 200, zh: "个", en: "apples" },
+  orange:          { g: 200, zh: "个", en: "oranges" },
+  kiwi:            { g: 100, zh: "个", en: "kiwis" },
+  pear:            { g: 200, zh: "个", en: "pears" },
+  whole_wheat_bread: { g: 35, zh: "片", en: "slices" },
+  white_bread:     { g: 35,  zh: "片", en: "slices" },
+  tortilla:        { g: 45,  zh: "张", en: "tortillas" },
+  naan:            { g: 60,  zh: "张", en: "naan" },
+  pita:            { g: 60,  zh: "张", en: "pitas" },
+  chicken_rtd:     { g: 100, zh: "袋", en: "packs" },
+  beef_rtd:        { g: 100, zh: "袋", en: "packs" },
+  instant_oatmeal: { g: 40,  zh: "袋", en: "sachets" },
+  milk:            { ml: true, zh: "ml", en: "ml" },
+  soy_milk:        { ml: true, zh: "ml", en: "ml" }
+};
+function roundGrams(g) {
+  if (g >= 100) return Math.round(g / 10) * 10;
+  if (g >= 40) return Math.round(g / 5) * 5;
+  return Math.round(g);
+}
+/* 取一道菜的主要食材（按克数前3），换算成直观单位：鸡蛋 2个 · 玉米 300g */
+function portionText(item) {
+  if (!item || !item.ing) return "";
+  var list = [];
+  for (var i = 0; i < item.ing.length; i++) {
+    var id = item.ing[i][0], g = item.ing[i][1];
+    var ing = ING[id];
+    if (!ing || g < 8) continue; /* 跳过调味料等少量食材 */
+    var name = pickName(ing);
+    var u = PORTION_UNITS[id];
+    var label;
+    if (u && u.ml) {
+      label = STATE.lang === "zh" ? name + " " + roundGrams(g) + "ml" : roundGrams(g) + "ml " + name;
+    } else if (u) {
+      var n = g / u.g;
+      if (n >= 1.5) {
+        var cnt = Math.round(n);
+        label = STATE.lang === "zh" ? name + " " + cnt + u.zh : cnt + " " + u.en + " " + name;
+      } else if (n >= 0.8) {
+        label = STATE.lang === "zh" ? name + " 1" + u.zh : "1 " + u.en + " " + name;
+      } else {
+        label = STATE.lang === "zh" ? name + " " + roundGrams(g) + "g" : roundGrams(g) + "g " + name;
+      }
+    } else {
+      label = STATE.lang === "zh" ? name + " " + roundGrams(g) + "g" : roundGrams(g) + "g " + name;
+    }
+    list.push({ w: g, t: label });
+  }
+  list.sort(function (a, b) { return b.w - a.w; });
+  return list.slice(0, 3).map(function (x) { return x.t; }).join(" · ");
+}
 function aboutDays(de) {
   if (!de) return "—";
   return t("aboutDays").replace("{d}", de.days).replace("{lo}", de.daysLo).replace("{hi}", de.daysHi);
@@ -708,7 +764,7 @@ function dishCellHTML(item) {
     '<div class="dish-name">' + esc(pickName(item)) + "</div>" +
     '<div class="dish-meta">' + item._kcal + " " + t("kcal") + " · " + money(item._cost) + "</div>" +
     '<div class="dish-tags">' +
-      (item._scaled ? '<span class="chip chip-orange">×' + item._scaled + "</span>" : "") +
+      (item._scaled ? '<div class="dish-meta">' + esc(portionText(item)) + "</div>" : "") +
       (item.tags || []).slice(0, 2).map(tagChip).join("") +
     "</div>" +
   "</div>";
@@ -783,9 +839,6 @@ function openModal(id) {
       '<span>P ' + p + "g · F " + f + "g · C " + c + "g</span>" +
     "</div>" +
     (item.tags && item.tags.length ? "<div>" + item.tags.map(tagChip).join("") + "</div>" : "") +
-    (item._scaled
-      ? '<div style="margin-top:6px"><span class="chip chip-orange">' + t("scaledNote").replace("{x}", item._scaled) + "</span></div>"
-      : "") +
     "<h4 style=\"margin:14px 0 6px\">🧺 " + t("modalIng") + "</h4>" +
     '<table class="data">' +
       "<thead><tr><th>" + t("modalIng") + "</th><th class=\"num\">" + t("kcal") +
@@ -830,8 +883,7 @@ function exportXLSX() {
   ];
   function dishText(item) {
     if (!item) return "";
-    var extra = item._scaled ? "（×" + item._scaled + "）" : "";
-    return pickName(item) + extra + "\n" + item._kcal + " " + t("kcal") + " · " + money(item._cost);
+    return pickName(item) + "\n" + portionText(item) + "\n" + item._kcal + " " + t("kcal") + " · " + money(item._cost);
   }
   var rows = [];
   /* 标题 + 摘要（合并单元格） */
