@@ -17,7 +17,7 @@ console.log("== 1. 语法检查 ==");
 const allJs = [
   "js/i18n.js", "js/data-regions.js", "js/data-ingredients.js", "js/data-macros.js",
   "js/data-dishes-east-asia.js", "js/data-dishes-global.js", "js/data-dishes-south-asia.js",
-  "js/data-dishes-west.js", "js/data-dishes-others.js", "js/calc.js",
+  "js/data-dishes-west.js", "js/data-dishes-others.js", "js/calc.js", "js/xlsx.js",
   "js/planner.js", "js/app.js"
 ];
 const ctx = {};
@@ -264,6 +264,25 @@ else ok("增肌模式偏瘦 → gainFromThin 提示（而非危险警告）✓")
 const chk6 = Calc.targetChecks({ age: 25, sex: "male", heightCm: 175, weight: 70, targetWeight: 90 });
 if (!chk6.some(c => c.key === "bigGain")) err("增重>15kg 未触发 bigGain 警告");
 else ok("增重>15kg → bigGain 警告 ✓");
+
+/* ---------- 6. XLSX 导出模块 ---------- */
+console.log("== 6. XLSX 导出模块 ==");
+const xb = ctx.XLSX.build({
+  sheetName: "一周日程",
+  cols: [{ w: 11 }, { w: 26 }],
+  rows: [
+    { cells: [{ t: "标题行", s: 5 }, { t: "", s: 5 }], h: 30 },
+    { cells: [{ t: "周一", s: 1 }, { t: "鸡胸沙拉\n320 千卡 · 约¥5.20", s: 3 }], h: 52 }
+  ],
+  merges: ["A1:B1"]
+});
+const xbuf = Buffer.from(xb);
+if (xbuf.slice(0, 4).toString("latin1") !== "PK\u0003\u0004") err("xlsx 不是有效 ZIP 文件");
+else if (!xbuf.includes(Buffer.from("[Content_Types].xml"))) err("xlsx 缺少 [Content_Types].xml");
+else if (!xbuf.includes(Buffer.from("xl/worksheets/sheet1.xml"))) err("xlsx 缺少 sheet1.xml");
+else if (!xbuf.includes(Buffer.from("xl/styles.xml"))) err("xlsx 缺少 styles.xml");
+else if (!xbuf.includes(Buffer.from("mergeCell"))) err("xlsx 缺少合并单元格");
+else ok("XLSX：ZIP 结构 + 必要部件 + 合并单元格齐全 ✓");
 
 console.log("");
 if (errs) { console.error("❌ 共 " + errs + " 个问题"); process.exit(1); }
