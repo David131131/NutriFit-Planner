@@ -228,7 +228,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 26px 18px 40px; }
 
 /* ---------- Tables ---------- */
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
-table.data { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+table.data { border-collapse: collapse; width: 100%; font-size: 14px; }
 table.data th, table.data td {
   padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line);
   vertical-align: top;
@@ -249,8 +249,8 @@ table.data .hl-cell { color: var(--green-dark); font-weight: 700; }
 .sched-table .day-col { font-weight: 700; white-space: nowrap; }
 .dish { cursor: pointer; border-radius: 10px; padding: 4px 2px; }
 .dish:hover { background: var(--green-soft); }
-.dish-name { font-weight: 600; font-size: 13.5px; }
-.dish-meta { font-size: 11.5px; color: var(--muted); }
+.dish-name { font-weight: 600; font-size: 14.5px; }
+.dish-meta { font-size: 12.5px; color: var(--muted); }
 .dish-tags { margin-top: 2px; }
 .sched-notes { margin-top: 16px; }
 .sched-notes ul { margin: 8px 0 0; padding-left: 20px; font-size: 13px; color: #42534b; }
