@@ -817,41 +817,95 @@ function closeModal() {
   document.getElementById("modalOverlay").hidden = true;
 }
 
-/* ---------- CSV 导出 ---------- */
-function exportCSV() {
-  var sch = STATE.schedule;
-  if (!sch) return;
+/* ---------- Excel 导出（.xlsx：行=餐次，列=周一到周日） ---------- */
+function exportXLSX() {
+  var sch = STATE.schedule, plan = STATE.selectedPlan;
+  if (!sch || !plan) return;
   var weekdays = t("weekdays");
-  var lines = [];
-  var head = [t("thDay"), t("mealTypePlaceholder"),
-    "Name", "Kcal", "Cost(CNY)", "Protein(g)", "Fat(g)", "Carbs(g)"];
-  lines[0] = head.join(",");
-  for (var i = 0; i < sch.days.length; i++) {
-    var d = sch.days[i];
-    var meals = [["breakfast", d.breakfast], ["lunch", d.lunch], ["dinner", d.dinner],
-                 ["snack", d.snack]];
-    if (d.snack2) meals.push(["snack", d.snack2]);
-    for (var j = 0; j < meals.length; j++) {
-      var key = meals[j][0], item = meals[j][1];
-      var name = pickName(item).replace(/,/g, " ");
-      lines.push([
-        weekdays[i],
-        t("th" + key.charAt(0).toUpperCase() + key.slice(1)),
-        name,
-        item._kcal, item._cost.toFixed(2), item._p, item._f, item._c
-      ].join(","));
-    }
+  var meals = [
+    { key: "breakfast", label: t("thBreakfast") },
+    { key: "lunch", label: t("thLunch") },
+    { key: "dinner", label: t("thDinner") },
+    { key: "snack", label: t("thSnack") }
+  ];
+  function dishText(item) {
+    if (!item) return "";
+    var extra = item._scaled ? "（×" + item._scaled + "）" : "";
+    return pickName(item) + extra + "\n" + item._kcal + " " + t("kcal") + " · " + money(item._cost);
   }
-  lines.push([t("avgRow"), "", "", sch.avgKcal, sch.avgCost.toFixed(2), sch.avgProtein, sch.avgFat, sch.avgCarbs].join(","));
-  var csv = "\uFEFF" + lines.join("\r\n");
+  var rows = [];
+  /* 标题 + 摘要（合并单元格） */
+  rows.push({ cells: [{ t: t("schedTitle") + " · " + pickName(plan.type), s: 5 }], h: 30 });
+  rows.push({ cells: [{ t: t("summaryIntake") + "：" + plan.intake.toLocaleString() + " " + t("kcal") +
+    "　　" + t("summaryCost") + "：" + money(sch.avgCost) +
+    "　　" + t("summaryDays") + "：" + aboutDays(plan.days), s: 0 }], h: 20 });
+  rows.push({ cells: [{ t: "" }], h: 6 });
+  /* 表头：餐次 + 周一~周日 + 周均 */
+  var head = [{ t: t("thDay"), s: 1 }];
+  for (var w = 0; w < 7; w++) head.push({ t: weekdays[w], s: 1 });
+  head.push({ t: t("avgRow"), s: 1 });
+  rows.push({ cells: head, h: 26 });
+  /* 四个餐次行 */
+  for (var m = 0; m < meals.length; m++) {
+    var cells = [{ t: meals[m].label, s: 2 }];
+    var sum = 0;
+    for (var d = 0; d < 7; d++) {
+      var item = sch.days[d][meals[m].key];
+      var item2 = meals[m].key === "snack" ? sch.days[d].snack2 : null;
+      var txt = dishText(item);
+      if (item2) txt += "\n+ " + dishText(item2);
+      cells.push({ t: txt, s: 3 });
+      sum += item._kcal + (item2 ? item2._kcal : 0);
+    }
+    cells.push({ t: Math.round(sum / 7) + " " + t("kcal"), s: 4 });
+    rows.push({ cells: cells, h: 52 });
+  }
+  /* 全天热量 / 全天成本 两行合计 */
+  var kcalCells = [{ t: t("xlSumKcal"), s: 2 }];
+  for (var d2 = 0; d2 < 7; d2++) kcalCells.push({ t: sch.days[d2].kcal.toLocaleString(), s: 4 });
+  kcalCells.push({ t: sch.avgKcal.toLocaleString(), s: 4 });
+  rows.push({ cells: kcalCells, h: 22 });
+  var costCells = [{ t: t("xlSumCost"), s: 2 }];
+  for (var d3 = 0; d3 < 7; d3++) costCells.push({ t: money(sch.days[d3].cost), s: 4 });
+  costCells.push({ t: money(sch.avgCost), s: 4 });
+  rows.push({ cells: costCells, h: 22 });
+  /* 备注 */
+  rows.push({ cells: [{ t: t("xlNote"), s: 0 }], h: 18 });
+
+  var merges = ["A1:I1", "A2:I2", "A3:I3", "A" + rows.length + ":I" + rows.length];
+  var cols = [{ w: 11 }];
+  for (var cw = 0; cw < 7; cw++) cols.push({ w: 26 });
+  cols.push({ w: 13 });
+
+  var data = XLSX.build({
+    sheetName: t("xlSheetName"),
+    cols: cols,
+    rows: rows,
+    merges: merges
+  });
+
+  var blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  var dt = new Date();
+  var stamp = dt.getFullYear() + String(dt.getMonth() + 1).padStart(2, "0") + String(dt.getDate()).padStart(2, "0");
   var a = document.createElement("a");
-  var d = new Date();
-  var stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
-  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-  a.download = "NutriFit-Plan_" + stamp + ".csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  a.download = "NutriFit-Plan_" + stamp + ".xlsx";
+  if (typeof URL !== "undefined" && URL.createObjectURL) {
+    a.href = URL.createObjectURL(blob);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } else {
+    /* 回退：data URI（兼容旧浏览器/jsdom 测试环境） */
+    var reader = new FileReader();
+    reader.onload = function () {
+      a.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," +
+        String(reader.result).split(",")[1];
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+    reader.readAsDataURL(blob);
+  }
 }
 
 /* ---------- 事件绑定 ---------- */
@@ -900,7 +954,7 @@ document.addEventListener("click", function (e) {
     STATE.schedule = Planner.buildSchedule(STATE.form, STATE.selectedPlan, STATE.seed);
     renderStep();
   } else if (action === "export") {
-    exportCSV();
+    exportXLSX();
   } else if (action === "change-plan") {
     gotoStep(3);
   } else if (action === "edit-data") {
