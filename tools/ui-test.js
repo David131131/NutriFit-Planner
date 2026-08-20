@@ -34,6 +34,10 @@ function click(el) {
 
   console.log("== UI 冒烟测试 ==");
 
+  /* 0. XLSX 导出模块已加载 */
+  if (!win.XLSX || typeof win.XLSX.build !== "function") fail("XLSX 导出模块未加载");
+  else ok("XLSX 导出模块已加载 ✓");
+
   /* 0. 回归：遮罩层在初始状态必须真正隐藏（display:none） */
   const overlayDisplay = win.getComputedStyle(doc.getElementById("modalOverlay")).display;
   if (overlayDisplay !== "none") fail("初始遮罩层未隐藏（display=" + overlayDisplay + "），会拦截所有点击");
@@ -166,11 +170,32 @@ function click(el) {
   const newFirst = doc.getElementById("sec-schedule").querySelector(".dish-name").textContent;
   ok("重新生成日程（首批菜品: " + oldFirst + " → " + newFirst + "）✓");
 
-  /* 7. 导出 CSV */
-  let csvOk = true;
-  try { click(doc.querySelector('[data-action="export"]')); } catch (e) { csvOk = false; }
-  if (!csvOk) fail("导出 CSV 抛异常");
-  else ok("导出 CSV 无异常 ✓");
+  /* 7. 导出 Excel（验证真实导出的 ZIP+XML 结构） */
+  win.URL.createObjectURL = function (blob) { win.__xlsxBlob = blob; return "blob:test"; };
+  let xlsxThrow = false;
+  try { click(doc.querySelector('[data-action="export"]')); } catch (e) { xlsxThrow = true; }
+  await new Promise(r => setTimeout(r, 150));
+  if (xlsxThrow) fail("导出 Excel 抛异常");
+  else if (!win.__xlsxBlob) fail("导出未生成 xlsx 数据");
+  else {
+    const buf = new Uint8Array(await win.__xlsxBlob.arrayBuffer());
+    require("fs").writeFileSync("/tmp/nf-export-test.xlsx", Buffer.from(buf)); // 供外部 unzip -t 验证
+    if (buf[0] !== 0x50 || buf[1] !== 0x4B) fail("xlsx 不是 ZIP 格式");
+    else {
+      const entries = win.XLSX.extract(buf);
+      const sheet = entries.find(e => e.name === "xl/worksheets/sheet1.xml");
+      if (!sheet) fail("xlsx 缺少工作表");
+      else {
+        const xdoc = new win.DOMParser().parseFromString(sheet.content, "application/xml");
+        if (xdoc.getElementsByTagName("parsererror").length) fail("工作表 XML 非法");
+        else {
+          const cellCount = xdoc.getElementsByTagName("c").length;
+          if (cellCount < 30) fail("工作表单元格过少: " + cellCount);
+          else ok("导出 Excel：ZIP + XML 合法，共 " + cellCount + " 个单元格（行=餐次，列=周一~周日）✓");
+        }
+      }
+    }
+  }
 
   /* 8. 语言切换 */
   click(doc.getElementById("langToggle"));
