@@ -192,6 +192,10 @@ function click(el) {
           const cellCount = xdoc.getElementsByTagName("c").length;
           if (cellCount < 30) fail("工作表单元格过少: " + cellCount);
           else ok("导出 Excel：ZIP + XML 合法，共 " + cellCount + " 个单元格（行=餐次，列=周一~周日）✓");
+          if (/（×/.test(sheet.content)) fail("Excel 中仍存在 ×倍率 歧义标记");
+          else ok("Excel 无 ×倍率 歧义标记 ✓");
+          if (!/(\d+g|个|根|片|袋|ml)/.test(sheet.content)) fail("Excel 缺少直观计量单位");
+          else ok("Excel 使用直观计量单位（g/个/片/袋/ml）✓");
         }
       }
     }
